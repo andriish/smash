@@ -58,8 +58,8 @@ find_package(GSL 2.0 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost 1.49.0 REQUIRED COMPONENTS filesystem system)
 
-option(USE_ROOT "Turn this off to disable ROOT output support in SMASH." ON)
-if(USE_ROOT)
+option(TRY_USE_ROOT "Turn this off to disable ROOT output support in SMASH." ON)
+if(TRY_USE_ROOT)
   find_package(ROOT 5.34 QUIET)
   if(ROOT_FOUND)
     message(STATUS "Found ROOT ${ROOT_VERSION} at ${ROOT_LIBRARIES}.")
@@ -71,25 +71,42 @@ if(USE_ROOT)
   endif()
 endif()
 
-option(USE_HEPMC "Turn this off to disable HepMC output support in SMASH." ON)
-if(USE_HEPMC OR USE_RIVET)
-  find_package(HepMC3 QUIET)
-  if(HepMC3_FOUND)
-    message(STATUS "Found HepMC ${HepMC3_VERSION} at ${HEPMC3_LIB}.")
+option(TRY_USE_HEPMC "Turn this off to disable HepMC output support in SMASH." ON)
+if(TRY_USE_HEPMC OR TRY_USE_RIVET)
+  find_program(HEPMC3_CONFIG HepMC3-config
+    DOC "Path to the HepMC3 configuration script")
+  if(HEPMC3_CONFIG)
+    execute_process(COMMAND ${HEPMC3_CONFIG} --version
+      OUTPUT_VARIABLE HEPMC3_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND ${HEPMC3_CONFIG} --includedir
+      OUTPUT_VARIABLE HEPMC3_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND ${HEPMC3_CONFIG} --libs
+      OUTPUT_VARIABLE HEPMC3_LIB OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "Found HepMC3 ${HepMC3_VERSION} at ${HEPMC3_INCLUDE_DIR} ${HEPMC3_LIB}.")
     include_directories(SYSTEM "${HEPMC3_INCLUDE_DIR}")
     set(SMASH_LIBRARIES
         ${SMASH_LIBRARIES}
         ${HEPMC3_LIB}
     )
+    if(ROOT_FOUND)
+      execute_process(COMMAND ${HEPMC3_CONFIG} --rootIO
+          OUTPUT_VARIABLE HEPMC3_ROOTIO_LIB OUTPUT_STRIP_TRAILING_WHITESPACE)
+      message(STATUS "Setting library linking flags for ROOT output support via HepMC3 ${HEPMC3_ROOTIO_LIB}.")
+      set(SMASH_LIBRARIES
+          ${SMASH_LIBRARIES}
+          ${HEPMC3_ROOTIO_LIB}
+      )
+    endif()
     add_definitions(-DSMASH_USE_HEPMC)
+    set(HepMC3_FOUND TRUE)
   else()
     message(STATUS "HepMC not found. Support disabled. See README for more information.")
   endif()
 endif()
 
-option(USE_RIVET "Turn this off to disable Rivet output support in SMASH." ON)
+option(TRY_USE_RIVET "Turn this off to disable Rivet output support in SMASH." ON)
 set(Rivet_FOUND FALSE)
-if(USE_RIVET AND HepMC3_FOUND)
+if(TRY_USE_RIVET AND HepMC3_FOUND)
   find_program(RIVET_CONFIG rivet-config
     DOC "Path to the Rivet configuration script")
   if(RIVET_CONFIG)
@@ -223,13 +240,13 @@ set(smash_src
         wallcrossingaction.cc
         )
 
-if(USE_ROOT AND ROOT_FOUND)
+if(TRY_USE_ROOT AND ROOT_FOUND)
   set(smash_src ${smash_src} rootoutput.cc)
 endif()
 
-if(USE_HEPMC AND HepMC3_FOUND)
+if(TRY_USE_HEPMC AND HepMC3_FOUND)
   set(smash_src ${smash_src} hepmcoutput.cc hepmcinterface.cc)
-  if(USE_RIVET AND Rivet_FOUND)
+  if(TRY_USE_RIVET AND Rivet_FOUND)
     set(smash_src ${smash_src} rivetoutput.cc)
   endif()
 endif()
