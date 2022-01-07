@@ -70,7 +70,7 @@ namespace smash {
  **/
 HepMcOutput::HepMcOutput(const bf::path &path, std::string name,
                          const bool full_event)
-    : HepMcInterface(name, full_event), filename_(path / (name + ".asciiv3")) {
+    : HepMcInterface(name, full_event), filename_(path / (name + ".root")) {
   filename_unfinished_ = filename_;
   filename_unfinished_ += +".unfinished";
   output_file_ = make_unique<HepMC3::WriterRootTree>(filename_unfinished_.string(),
