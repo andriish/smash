@@ -7,6 +7,8 @@
 #
 #########################################################
 
+# Minimum cmake version this is tested on
+cmake_minimum_required(VERSION 3.1)
 # The name of our project
 project(smash CXX)
 
@@ -15,8 +17,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
    message(FATAL_ERROR "You don't want to configure in the source directory!")
 endif()
 
-# Minimum cmake version this is tested on
-cmake_minimum_required(VERSION 3.1)
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
 
 if(NOT "${CMAKE_CXX_STANDARD}")
   set(CMAKE_CXX_STANDARD 11)
@@ -53,6 +55,8 @@ endif()
 # add 3rd-party libraries (before setting compiler flags etc)
 include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Cuba-4.2.1")
 include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/einhard")
+
+#Report what you find, e.g. message(STATUS "Found yamlcpp ...")
 
 find_package(yaml-cpp 0.6 QUIET NO_MODULE)
 if (yaml-cpp_FOUND)
@@ -101,6 +105,9 @@ endif()
 
 # The '-march=native' flag is not supported e.g. on Apple M1 machines
 #  -> check if the C++ compiler supports it
+
+#use include(CheckCXXCompilerFlag) to check -march
+
 set(CMAKE_REQUIRED_FLAGS "-march=native")
 include(CheckCXXSourceCompiles)
 CHECK_CXX_SOURCE_COMPILES("int main() {return 0;}" CXX_MARCH_NATIVE_SUPPORTED)
@@ -110,25 +117,6 @@ else()
    message(STATUS "Your C++ compiler does not support the '-march=native' flag. This will not be used.")
 endif()
 
-# check that C++11 code compiles
-# in order for this to work the policy on respecting the CXX_STANDARD for
-# try_compile has to be changed first
-# see https://cmake.org/cmake/help/v3.8/policy/CMP0067.html
-cmake_policy(SET CMP0067 NEW)
-set(CMAKE_REQUIRED_FLAGS "-std=c++11")
-CHECK_CXX_SOURCE_COMPILES("
-#include <initializer_list>
-struct A {};
-struct B : public A { using A::A; };
-template<typename T = void> int f() { return 1; }
-int main() {
-  auto l = []() { return f(); };
-  return l() - 1;
-}
-" CXX11_COMPILES)
-if(NOT CXX11_COMPILES)
-   message(FATAL_ERROR "Your compiler did not manage to compile a simple C++11 program. Please get a newer C++ compiler.")
-endif()
 
 # have binary in the build directory
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})

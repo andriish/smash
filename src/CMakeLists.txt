@@ -15,7 +15,9 @@ include(GetGitRevisionDescription)
 git_describe(VERSION_MAJOR)
 
 # Enable warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -Wextra -Wmissing-declarations -Wpointer-arith -Wshadow -Wuninitialized -Winit-self -Wundef -Wcast-align -Wformat=2 -Wold-style-cast -Werror=switch")
+#Here one should use CXX_COMPILER_ID  and CHECK all flags in a loop!
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -W -Wall -Wextra -Wmissing-declarations -Wpointer-arith -Wshadow -Wuninitialized -Winit-self -Wundef -Wcast-align -Wformat=2 -Wold-style-cast -Werror=switch")
 if (CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wlogical-op")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
@@ -73,6 +75,10 @@ endif()
 
 option(TRY_USE_HEPMC "Turn this off to disable HepMC output support in SMASH." ON)
 if(TRY_USE_HEPMC OR TRY_USE_RIVET)
+#Here schould be just 
+# find_package(HepMC3)
+#that is all. HepMC3 has cmake setup!
+
   find_program(HEPMC3_CONFIG HepMC3-config
     DOC "Path to the HepMC3 configuration script")
   if(HEPMC3_CONFIG)
@@ -107,6 +113,8 @@ endif()
 option(TRY_USE_RIVET "Turn this off to disable Rivet output support in SMASH." ON)
 set(Rivet_FOUND FALSE)
 if(TRY_USE_RIVET AND HepMC3_FOUND)
+#This stuff should go into FindRivet
+
   find_program(RIVET_CONFIG rivet-config
     DOC "Path to the Rivet configuration script")
   if(RIVET_CONFIG)
@@ -132,14 +140,18 @@ endif()
 # find Pythia
 find_package(Pythia 8.303  REQUIRED)
 if(Pythia_FOUND)
+#use target_include_directories!
   include_directories(SYSTEM
      "${Pythia_INCLUDE_DIRS}"
      )
+#use target_link_libraries!     
   link_directories("${Pythia_LIBDIR}")
   set(SMASH_LIBRARIES
      ${SMASH_LIBRARIES}
+# -ldl is not portable!
      ${Pythia_LIBRARIES} -ldl
   )
+#Use target_add_definitions!  
   add_definitions(
   "-DPYTHIA_XML_DIR=\"${Pythia_xmldoc_PATH}\""
   -DPYTHIA_FOUND
