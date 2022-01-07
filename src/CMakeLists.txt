@@ -130,7 +130,7 @@ if(TRY_USE_RIVET AND HepMC3_FOUND)
 endif()
 
 # find Pythia
-find_package(Pythia 8.303 EXACT REQUIRED)
+find_package(Pythia 8.303  REQUIRED)
 if(Pythia_FOUND)
   include_directories(SYSTEM
      "${Pythia_INCLUDE_DIRS}"
